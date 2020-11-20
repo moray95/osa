@@ -1,0 +1,19 @@
+#!/usr/bin/env ruby
+require 'osa/services/setup_service'
+require 'osa/services/auth_service'
+
+cmd = $ARGV.shift
+
+case cmd
+when 'setup'
+  OSA::SetupService.new.setup!
+when 'login'
+  OSA::AuthService.login(Config.first || Config.new)
+when 'scan-junk'
+  require 'osa/scripts/scan_junk_folder'
+when 'scan-report'
+  require 'osa/scripts/scan_report_folder'
+else
+  $stderr.puts "Usage: #{File.basename($0)} [setup|login|scan-junk|scan-report]"
+  exit 1
+end

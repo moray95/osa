@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Outlook Spam Automator Login</title>
+</head>
+<body>
+<div id="code"></div>
+</body>
+</html>
+<script>
+    const urlParams = new URLSearchParams(location.search);
+    document.getElementById("code").innerText = "code: " + urlParams.get('code');
+</script>
