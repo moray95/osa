@@ -17,7 +17,6 @@ loop do
     puts "deleting spam from #{email_address}"
     context.graph_client.delete_mail(mail['id'])
 
-
     next if email_address.nil?
     domain = PublicSuffix.domain(email_address.split('@', 2)[1])
 

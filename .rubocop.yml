@@ -6,6 +6,7 @@ AllCops:
   DisabledByDefault: true
   Exclude:
     - '**/vendor/**/*'
+    - 'bin/**'
 
 Bundler/DuplicatedGem:
   Enabled: true

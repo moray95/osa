@@ -39,7 +39,7 @@ module OSA
       base_uri = 'https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize'
 
       uri = "#{base_uri}#{query_str}"
-      puts "Open the following url in your browser and enter the authentication code displayed."
+      puts 'Open the following url in your browser and enter the authentication code displayed.'
       puts uri
 
       prompt = TTY::Prompt.new

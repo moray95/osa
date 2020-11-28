@@ -5,9 +5,8 @@ ActiveRecord::Base.establish_connection(
   adapter: 'sqlite3',
   database: ENV['DATABASE'] || "#{Dir.pwd}/osa.db"
 )
-root = "#{File.dirname(__FILE__ )}/../"
+root = "#{File.dirname(__FILE__)}/../"
 ActiveRecord::MigrationContext.new("#{root}/migrations", ActiveRecord::SchemaMigration).migrate
-
 
 module OSA
   class Blacklist < ActiveRecord::Base

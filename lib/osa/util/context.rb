@@ -10,7 +10,7 @@ module OSA
     attr_reader :auth_service
     attr_reader :config
 
-    def initialize(config=nil)
+    def initialize(config = nil)
       @config = config || Config.first
 
       if @config.nil?

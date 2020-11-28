@@ -1,4 +1,5 @@
 #!/usr/bin/env ruby
+# frozen_string_literal: true
 require 'osa/services/setup_service'
 require 'osa/services/auth_service'
 
@@ -8,7 +9,7 @@ case cmd
 when 'setup'
   OSA::SetupService.new.setup!
 when 'login'
-  OSA::AuthService.login(Config.first || Config.new)
+  OSA::AuthService.login(OSA::Config.first || OSA::Config.new)
 when 'scan-junk'
   require 'osa/scripts/scan_junk_folder'
 when 'scan-report'

@@ -15,6 +15,11 @@ module OSA
       handle_response(response)
     end
 
+    def put(*args, **kwargs)
+      response = @connection.put(*args, **kwargs)
+      handle_response(response)
+    end
+
     def delete(*args, **kwargs)
       response = @connection.delete(*args, **kwargs)
       handle_response(response)
@@ -31,7 +36,7 @@ module OSA
         if response.status > 299
           raise StandardError, "Request failed with status code: #{response.status}, body: #{response.body}"
         end
-        if response.headers['content-type'].include?('application/json')
+        if response.headers['content-type']&.include?('application/json')
           JSON.parse(response.body)
         else
           response.body
