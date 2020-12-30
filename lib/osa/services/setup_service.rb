@@ -18,10 +18,9 @@ module OSA
       }.to_h
       prompt = TTY::Prompt.new
       junk_folder_id = prompt.select('Select junk folder:', choices)
-      report_folder_id = prompt.select('Select report folder:', choices)
       spamcop_email = prompt.ask('Spamcop report email:') { |q| q.validate :email }
 
-      config.update! junk_folder_id: junk_folder_id, report_folder_id: report_folder_id, spamcop_report_email: spamcop_email
+      config.update! junk_folder_id: junk_folder_id, spamcop_report_email: spamcop_email
     end
   end
 end

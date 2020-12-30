@@ -4,17 +4,18 @@
 
 ### Basics
 
-OSA uses asks you to choose two folders one "junk" folder and one "report" folder. Even though you can choose any folder
-for both, it's recommend to choose the default junk folder as the junk folder and create a custom folder for as the report
-folder.
+OSA asks you to choose your junk folder on first configuration. After the folder is selected, the `scan-junk` command
+allows you to scan the folder to report and delete any unwanted spam. It's important to chose the actual junk folder
+so your Outlook spam filters does not get broken. However, OSA will work with any folder. The processing for each email
+uses the following rules:
 
-These two folders will be used the following way:
-- When the report folder is scanned, all emails are reported to [Spamcop](https://spamcop.net), deleted and the senders blacklisted.
-- When the junk folder is scanned, all emails from the blacklist are reported to [Spamcop](https://spamcop.net) and deleted.
+1. If the email is flagged, the email is reported to Spamcop, then deleted and the sender is blacklisted.
+2. If the email's sender is blacklisted, the email is reported to Spamcop, then deleted.
+3. Otherwise, the email is left untouched. 
 
-*OSA will not touch any folder beside these two.*
+*OSA will not touch any folder beside the folder you've chosen.*
 
-*It's the user's responsibility to move junk mails to the report folder to build up the blacklist.*
+*It's the user's responsibility to move junk mails to the junk folder and flag them to build up the blacklist.*
 
 ### The blacklist
 
@@ -57,12 +58,6 @@ osa setup
 ```
 
 Each time you run this command, your previous configuration will be erased, except for your blacklist.
-
-Process your report folder:
-
-```sh
-osa scan-report
-```
 
 Process your junk folder:
 

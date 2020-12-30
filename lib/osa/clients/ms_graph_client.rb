@@ -33,11 +33,11 @@ module OSA
     end
 
     def folders
-      Paginated.new(@authenticated.get('/v1.0/me/mailFolders'), self)
+      Paginated.new(@authenticated.get('/v1.0/me/mailFolders'), @authenticated)
     end
 
     def mails(folder_id)
-      Paginated.new(@authenticated.get("/v1.0/me/mailFolders/#{folder_id}/messages"), self)
+      Paginated.new(@authenticated.get("/v1.0/me/mailFolders/#{folder_id}/messages"), @authenticated)
     end
 
     def raw_mail(mail_id)

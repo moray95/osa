@@ -12,9 +12,7 @@ when 'login'
   OSA::AuthService.login(OSA::Config.first || OSA::Config.new)
 when 'scan-junk'
   require 'osa/scripts/scan_junk_folder'
-when 'scan-report'
-  require 'osa/scripts/scan_report_folder'
 else
-  $stderr.puts "Usage: #{File.basename($0)} [setup|login|scan-junk|scan-report]"
+  $stderr.puts "Usage: #{File.basename($0)} [setup|login|scan-junk]"
   exit 1
 end
