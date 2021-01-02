@@ -3,6 +3,7 @@ require 'osa/util/constants'
 require 'public_suffix'
 require 'osa/util/db'
 require 'osa/util/context'
+require 'public_suffix'
 
 context = OSA::Context.new
 
@@ -37,6 +38,19 @@ while continue
       context.graph_client.forward_mail_as_attachment(mail['id'], context.config.spamcop_report_email)
       puts "deleting spam from #{email_address}"
       context.graph_client.delete_mail(mail['id'])
+
+      if flagged
+        domain = PublicSuffix.domain(email_address.split('@', 2)[1])
+
+        is_free_provider = OSA::EmailProvider.where(value: domain).exists?
+        if is_free_provider
+          puts "#{email_address} is using a free provider, blacklisting full address"
+          OSA::Blacklist.find_or_create_by(value: email_address).save!
+        else
+          puts "Adding #{domain} to blacklist"
+          OSA::Blacklist.find_or_create_by(value: domain).save!
+        end
+      end
     end
     mails = mails.next
   end
