@@ -48,6 +48,9 @@ module OSA
       raw_mail = self.raw_mail(mail_id)
       forward_message = create_forward_message(mail_id)
       update = {
+        body: {
+          content: ''
+        },
         toRecipients: [
           {
             emailAddress: {
