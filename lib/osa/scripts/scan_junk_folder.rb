@@ -21,7 +21,7 @@ while continue
 
       flagged = mail['flag']['flagStatus'] == 'flagged'
       blacklisted = nil
-      blacklisted = OSA::Blacklist.where(value: email_address).or(OSA::Blacklist.where(value: domain)).exists? unless flagged
+      blacklisted = OSA::Blacklist.where(value: email_address).or(OSA::Blacklist.where(value: domain)).exists?
 
       if flagged
         puts "Email from #{email_address} is flagged, reporting and deleting"
@@ -39,9 +39,9 @@ while continue
       puts "deleting spam from #{email_address}"
       context.graph_client.delete_mail(mail['id'])
 
-      if flagged
-        domain = PublicSuffix.domain(email_address.split('@', 2)[1])
+      domain = PublicSuffix.domain(email_address.split('@', 2)[1])
 
+      if flagged
         is_free_provider = OSA::EmailProvider.where(value: domain).exists?
         if is_free_provider
           puts "#{email_address} is using a free provider, blacklisting full address"
@@ -51,6 +51,14 @@ while continue
           OSA::Blacklist.find_or_create_by(value: domain).save!
         end
       end
+
+      OSA::Report.create!(sender: email_address,
+                     sender_domain: domain,
+                     subject: mail['subject'],
+                     flagged: flagged,
+                     blacklisted: blacklisted,
+                     received_at: Time.iso8601(mail['receivedDateTime']),
+                     reported_at: Time.now)
     end
     mails = mails.next
   end

@@ -18,4 +18,7 @@ module OSA
 
   class EmailProvider < ActiveRecord::Base
   end
+
+  class Report < ActiveRecord::Base
+  end
 end
