@@ -65,6 +65,15 @@ Process your junk folder:
 osa scan-junk
 ```
 
+OSA also provides you a nice administration dashboard you. You can access the dashboard by running
+
+```sh
+osa dashboard
+```
+
+You are now able to access the dashboard on `http://localhost:8080`. You can also change the port of the server by
+providing the `SERVER_PORT` environment variable.
+
 ## Contributing
 
 Bug reports and pull requests are welcome on GitHub at https://github.com/moray95/osa.

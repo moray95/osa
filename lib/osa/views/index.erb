@@ -1,0 +1,296 @@
+<!-- Content Wrapper. Contains page content -->
+<div class="content-wrapper" style="min-height: 1233px;">
+  <!-- Content Header (Page header) -->
+  <div class="content-header">
+    <div class="container-fluid">
+      <div class="row mb-2">
+        <div class="col-sm-6">
+          <h1 class="m-0">Overview</h1>
+        </div><!-- /.col -->
+      </div><!-- /.row -->
+    </div><!-- /.container-fluid -->
+  </div>
+  <!-- /.content-header -->
+
+  <!-- Main content -->
+  <div class="content">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-lg">
+          <!-- small card -->
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3 id="blacklist-count"></h3>
+              <p>entries in blacklist</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg">
+          <!-- small card -->
+          <div class="small-box bg-info">
+            <div class="inner">
+              <h3 id="reporting-time"></h3>
+              <p>average reporting time</p>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg">
+          <!-- small card -->
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3 id="today-count"></h3>
+              <p>emails reported today</p>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg">
+          <!-- small card -->
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3 id="week-count"></h3>
+              <p>emails reported in the last 7 days</p>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg">
+          <!-- small card -->
+          <div class="small-box bg-success">
+            <div class="inner">
+              <h3 id="month-count"></h3>
+              <p>emails reported in the last 30 days</p>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+        <div class="col-lg">
+          <!-- small card -->
+          <div class="small-box bg-warning">
+            <div class="inner">
+              <h3 id="total-count"></h3>
+              <p>emails reported in total</p>
+            </div>
+          </div>
+        </div>
+        <!-- ./col -->
+      </div>
+
+      <div class="row">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Spams reported</h3>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body">
+            <div class="chart">
+              <div class="chartjs-size-monitor">
+                <div class="chartjs-size-monitor-expand">
+                  <div class=""></div>
+                </div>
+                <div class="chartjs-size-monitor-shrink">
+                  <div class=""></div>
+                </div>
+              </div>
+              <canvas id="report-history-chart" style="min-height: 250px; height: 250px; max-height: 250px; max-width: 100%; display: block; width: 1732px;" width="1732" height="250" class="chartjs-render-monitor"></canvas>
+            </div>
+          </div>
+          <!-- /.card-body -->
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Top spammers</h3>
+          </div>
+          <!-- /.card-header -->
+          <div class="card-body p-0">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th style="width: 10px">#</th>
+                <th>Domain</th>
+                <th>Emails reported</th>
+                <th>Spam ratio</th>
+                <th style="width: 40px"></th>
+              </tr>
+              </thead>
+              <tbody id="top-spammers-table-body">
+              </tbody>
+            </table>
+          </div>
+          <!-- /.card-body -->
+        </div>
+      </div>
+
+
+    </div> <!-- /.container-fluid -->
+
+
+  </div>
+  <!-- /.content -->
+</div>
+<!-- /.content-wrapper -->
+
+<script>
+    let totalReportCount = 0;
+
+    function sec2time(timeInSeconds) {
+        const pad = function (num, size) {
+            return ('000' + num).slice(size * -1);
+        }
+        const time = parseFloat(timeInSeconds).toFixed(3);
+        const hours = Math.floor(time / 60 / 60);
+        const minutes = Math.floor(time / 60) % 60;
+
+        const units = [{value: hours, unit: 'h'}, {value: minutes, unit: 'm'}].filter((value) => value.value > 0 );
+
+        return units.map((value) => `${pad(value.value, 2)}${value.unit}`).join(' ');
+    }
+
+    async function updateStats() {
+        const response = await fetch('/api/stats/summary');
+        if (response.ok) {
+            const body = await response.json();
+            document.getElementById('blacklist-count').innerText = body['blacklist_count'];
+            document.getElementById('today-count').innerText = body['today_reported'];
+            document.getElementById('week-count').innerText = body['week_reported'];
+            document.getElementById('month-count').innerText = body['month_reported'];
+            document.getElementById('total-count').innerText = body['total_reported'];
+            const meanReportTime = body['mean_report_time'];
+            if (meanReportTime !== null) {
+                document.getElementById('reporting-time').innerText = sec2time(meanReportTime);
+            } else {
+                document.getElementById('reporting-time').innerText = 'N/A';
+            }
+            totalReportCount = body['total_reported'];
+        }
+    }
+
+    function createProgressDiv(fillRatio) {
+        const progressDiv = document.createElement("div");
+        progressDiv.className = "progress progress-xs";
+
+        const progressBarDiv = document.createElement("div");
+        progressBarDiv.className = "progress-bar progress-bar-danger";
+        progressBarDiv.style.width = `${fillRatio}%`;
+
+        progressDiv.appendChild(progressBarDiv);
+        return progressDiv;
+    }
+
+    async function updateSpammers() {
+        const response = await fetch('/api/stats/spammers');
+        if (response.ok) {
+            const body = await response.json();
+
+            const table = body.map((spammer, index) => {
+                const tr = document.createElement("tr");
+
+                const indexTd = document.createElement("td");
+                indexTd.innerText = index + 1;
+                tr.appendChild(indexTd);
+
+                const domainTd = document.createElement("td");
+                domainTd.innerText = spammer['domain'];
+                tr.appendChild(domainTd);
+
+                const reportCountTd = document.createElement("td");
+                reportCountTd.innerText = spammer['count'];
+                tr.appendChild(reportCountTd);
+
+                const spamRatio = spammer['count'] / totalReportCount * 100;
+
+                const spamRatioProgressTd = document.createElement("td");
+                spamRatioProgressTd.append(createProgressDiv(spamRatio));
+                tr.appendChild(spamRatioProgressTd);
+
+                const spamRatioTd = document.createElement("td");
+                spamRatioTd.innerText = `${spamRatio}%`;
+                tr.appendChild(spamRatioTd);
+
+                return tr;
+            });
+            const tableBody = document.getElementById("top-spammers-table-body")
+            tableBody.innerHTML = "";
+            table.forEach((row) => {
+                tableBody.appendChild(row);
+            });
+
+        }
+    }
+
+    function createHistoricalChart() {
+        const options = {
+            maintainAspectRatio: false,
+            responsive: true,
+            legend: {
+                display: false
+            },
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        display: false,
+                    }
+                }],
+                yAxes: [{
+                    gridLines: {
+                        display: false,
+                    }
+                }]
+            }
+        }
+
+        const chartData = {
+            labels: [],
+            datasets: [
+                {
+                    label: 'Spams reported',
+                    backgroundColor: 'rgba(60,141,188,0.9)',
+                    borderColor: 'rgba(60,141,188,0.8)',
+                    pointColor: '#3b8bba',
+                    pointStrokeColor: 'rgba(60,141,188,1)',
+                    pointHighlightFill: '#fff',
+                    pointHighlightStroke: 'rgba(60,141,188,1)',
+                    data: []
+                }
+            ]
+        }
+        const ctx = document.getElementById('report-history-chart').getContext('2d');
+
+        return new Chart(ctx, {
+            type: 'line',
+            options: options,
+            data: chartData
+        });
+    }
+
+    const historicalChart = createHistoricalChart();
+
+    async function updateHistoricalChart() {
+        const response = await fetch("/api/stats/reports/historical");
+        if (response.ok) {
+            const body = await response.json();
+
+            const labels = body.map((data) => data['date']);
+            const values = body.map((data) => data['count']);
+
+            historicalChart.data.labels = labels
+            historicalChart.data.datasets[0].data = values
+            historicalChart.update();
+        }
+    }
+
+    function update() {
+        updateStats()
+            .then(updateSpammers)
+            .then(updateHistoricalChart)
+            .then(() => {
+                setTimeout(update, 10 * 60 * 1000);
+            })
+    }
+
+    update();
+</script>
