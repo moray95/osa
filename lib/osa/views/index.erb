@@ -138,16 +138,13 @@
     let totalReportCount = 0;
 
     function sec2time(timeInSeconds) {
-        const pad = function (num, size) {
-            return ('000' + num).slice(size * -1);
-        }
         const time = parseFloat(timeInSeconds).toFixed(3);
         const hours = Math.floor(time / 60 / 60);
         const minutes = Math.floor(time / 60) % 60;
 
         const units = [{value: hours, unit: 'h'}, {value: minutes, unit: 'm'}].filter((value) => value.value > 0 );
 
-        return units.map((value) => `${pad(value.value, 2)}${value.unit}`).join(' ');
+        return units.map((value) => `${value.value}${value.unit}`).join(' ');
     }
 
     async function updateStats() {
@@ -208,7 +205,7 @@
                 tr.appendChild(spamRatioProgressTd);
 
                 const spamRatioTd = document.createElement("td");
-                spamRatioTd.innerText = `${spamRatio}%`;
+                spamRatioTd.innerText = `${spamRatio.toFixed(1)}%`;
                 tr.appendChild(spamRatioTd);
 
                 return tr;
