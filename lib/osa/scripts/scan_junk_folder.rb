@@ -9,6 +9,18 @@ context = OSA::Context.new
 
 continue = true
 
+dns_blacklists = OSA::DnsBlacklist.all
+
+def resolve_blacklist(mail_id, email_address, domain, context, dns_blacklists)
+  return 'db' if OSA::Blacklist.where(value: email_address).or(OSA::Blacklist.where(value: domain)).exists?
+  ip = context.graph_client.sender_ip(mail_id)
+  if ip.nil?
+    puts "Couldn't detect ip for email from #{email_address}"
+    return nil
+  end
+  dns_blacklists.find { |bl| bl.blacklisted?(ip) }&.server
+end
+
 while continue
   mails = context.graph_client.mails(context.config.junk_folder_id)
   continue = false
@@ -20,12 +32,12 @@ while continue
       domain = PublicSuffix.domain(email_address.split('@', 2)[1])
 
       flagged = mail['flag']['flagStatus'] == 'flagged'
-      blacklisted = OSA::Blacklist.where(value: email_address).or(OSA::Blacklist.where(value: domain)).exists?
+      blacklist = (resolve_blacklist(mail['id'], email_address, domain, context, dns_blacklists) unless flagged)
 
       if flagged
         puts "Email from #{email_address} is flagged, reporting and deleting"
-      elsif blacklisted
-        puts "#{email_address} is blacklisted, reporting and deleting"
+      elsif !blacklist.nil?
+        puts "#{email_address} is blacklisted by #{blacklist}, reporting and deleting"
       else
         puts "Skipping mail from #{email_address}, its not blacklisted"
         next
@@ -38,8 +50,16 @@ while continue
       puts "deleting spam from #{email_address}"
       context.graph_client.delete_mail(mail['id'])
 
-      domain = PublicSuffix.domain(email_address.split('@', 2)[1])
+      OSA::Report.create!(sender: email_address,
+                          sender_domain: domain,
+                          subject: mail['subject'],
+                          flagged: flagged,
+                          blacklist: blacklist,
+                          received_at: Time.iso8601(mail['receivedDateTime']),
+                          reported_at: Time.now)
 
+      # Do not add to the blacklist if the it's blacklisted by the db (it's already present)
+      # or blacklisted by DNSBLs (these blacklists are only supposed to be temporary).
       if flagged
         is_free_provider = OSA::EmailProvider.where(value: domain).exists?
         if is_free_provider
@@ -50,15 +70,8 @@ while continue
           OSA::Blacklist.find_or_create_by(value: domain).save!
         end
       end
-
-      OSA::Report.create!(sender: email_address,
-                     sender_domain: domain,
-                     subject: mail['subject'],
-                     flagged: flagged,
-                     blacklisted: blacklisted,
-                     received_at: Time.iso8601(mail['receivedDateTime']),
-                     reported_at: Time.now)
     end
+
     mails = mails.next
   end
 end

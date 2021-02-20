@@ -25,6 +25,13 @@ be blacklisted. However, to prevent millions of users to go blacklisted because 
 list of free email providers (which includes domains like gmail.com, outlook.com among others). If the sender uses a free
 email provider, the full address is blacklisted.
 
+OSA also supports Domain Name System Blacklist. In fact it comes bundled with 3 DNSBL:
+1. [Spamcop Blocking List](https://www.spamcop.net/fom-serve/cache/297.html)
+2. [Spamhaus Block List](https://www.spamhaus.org/sbl)
+3. [Passive Spam Block List](https://psbl.org)
+
+You can remove these or add more blacklists, from the database, after you configure OSA.
+
 ## Installation
 
 You can install OSA from RubyGems:

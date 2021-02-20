@@ -28,4 +28,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency 'tty-prompt', '~> 0.22'
   spec.add_dependency 'sinatra', '~> 2.1.0'
   spec.add_dependency 'sinatra-contrib', '~> 2.1.0'
+  spec.add_dependency 'mail', '~> 2.7.1'
 end

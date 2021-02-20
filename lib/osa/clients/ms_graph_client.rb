@@ -6,6 +6,7 @@ require 'osa/util/paginated'
 require 'osa/clients/http_client'
 require 'active_support/core_ext/numeric/bytes'
 require 'active_support'
+require 'mail'
 
 module OSA
   class MSGraphClient
@@ -42,6 +43,12 @@ module OSA
 
     def raw_mail(mail_id)
       @authenticated.get("/v1.0/me/messages/#{mail_id}/$value")
+    end
+
+    def sender_ip(mail_id)
+      content = raw_mail(mail_id)
+      mail = Mail.new(content)
+      mail.header['x-sender-ip']
     end
 
     def forward_mail_as_attachment(mail_id, to)

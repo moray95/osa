@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 require 'active_record'
+require 'resolv'
 
 ActiveRecord::Base.establish_connection(
   adapter: 'sqlite3',
@@ -20,5 +21,13 @@ module OSA
   end
 
   class Report < ActiveRecord::Base
+  end
+
+  class DnsBlacklist < ActiveRecord::Base
+    def blacklisted?(ip)
+      ::Resolv.getaddress("#{ip}.#{server}") != "0.0.0.0"
+    rescue ::Resolv::ResolvError
+      return false
+    end
   end
 end
