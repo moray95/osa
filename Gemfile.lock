@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    osa (0.2.0)
+    osa (0.2.1)
       activerecord (~> 6.0)
       faraday (~> 1.1)
       mail (~> 2.7.1)
