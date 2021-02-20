@@ -5,7 +5,7 @@
     <div class="container-fluid">
       <div class="row mb-2">
         <div class="col-sm-6">
-          <h1 class="m-0">Overview</h1>
+          <h1 id="title" class="m-0">Spammer Details</h1>
         </div><!-- /.col -->
       </div><!-- /.row -->
     </div><!-- /.container-fluid -->
@@ -16,24 +16,6 @@
   <div class="content">
     <div class="container-fluid">
       <div class="row">
-        <div class="col-lg">
-          <!-- small card -->
-          <div class="small-box bg-info">
-            <div class="inner">
-              <h3 id="blacklist-count"></h3>
-              <p>entries in blacklist</p>
-            </div>
-          </div>
-        </div>
-        <div class="col-lg">
-          <!-- small card -->
-          <div class="small-box bg-info">
-            <div class="inner">
-              <h3 id="reporting-time"></h3>
-              <p>average reporting time</p>
-            </div>
-          </div>
-        </div>
         <!-- ./col -->
         <div class="col-lg">
           <!-- small card -->
@@ -103,21 +85,14 @@
       <div class="row">
         <div class="card">
           <div class="card-header">
-            <h3 class="card-title">Top spammers</h3>
+            <h3 class="card-title">Domains</h3>
           </div>
           <!-- /.card-header -->
           <div class="card-body p-0">
             <table class="table table-striped">
               <thead>
-              <tr>
-                <th style="width: 10px">#</th>
-                <th>Domain</th>
-                <th>Emails reported</th>
-                <th>Spam ratio</th>
-                <th style="width: 40px"></th>
-              </tr>
               </thead>
-              <tbody id="top-spammers-table-body">
+              <tbody id="domains-table-body">
               </tbody>
             </table>
           </div>
@@ -127,98 +102,37 @@
 
 
     </div> <!-- /.container-fluid -->
-
-
+    </div>
   </div>
   <!-- /.content -->
 </div>
 <!-- /.content-wrapper -->
 
 <script>
-    let totalReportCount = 0;
-
-    function sec2time(timeInSeconds) {
-        const time = parseFloat(timeInSeconds).toFixed(3);
-        const hours = Math.floor(time / 60 / 60);
-        const minutes = Math.floor(time / 60) % 60;
-
-        const units = [{value: hours, unit: 'h'}, {value: minutes, unit: 'm'}].filter((value) => value.value > 0 );
-
-        return units.map((value) => `${value.value}${value.unit}`).join(' ');
-    }
+    const pathComponents = window.location.pathname.split('/');
+    const spammer = pathComponents[pathComponents.length - 1];
+    document.getElementById("title").innerText = `${spammer} Details`;
 
     async function updateStats() {
-        const response = await fetch('/api/stats/summary');
+        const response = await fetch(`/api/stats/spammers/${spammer}/summary`);
         if (response.ok) {
             const body = await response.json();
-            document.getElementById('blacklist-count').innerText = body['blacklist_count'];
             document.getElementById('today-count').innerText = body['today_reported'];
             document.getElementById('week-count').innerText = body['week_reported'];
             document.getElementById('month-count').innerText = body['month_reported'];
             document.getElementById('total-count').innerText = body['total_reported'];
-            const meanReportTime = body['mean_report_time'];
-            if (meanReportTime !== null) {
-                document.getElementById('reporting-time').innerText = sec2time(meanReportTime);
-            } else {
-                document.getElementById('reporting-time').innerText = 'N/A';
-            }
             totalReportCount = body['total_reported'];
-        }
-    }
 
-    function createProgressDiv(fillRatio) {
-        const progressDiv = document.createElement("div");
-        progressDiv.className = "progress progress-xs";
-
-        const progressBarDiv = document.createElement("div");
-        progressBarDiv.className = "progress-bar progress-bar-danger";
-        progressBarDiv.style.width = `${fillRatio}%`;
-
-        progressDiv.appendChild(progressBarDiv);
-        return progressDiv;
-    }
-
-    async function updateSpammers() {
-        const response = await fetch('/api/stats/spammers');
-        if (response.ok) {
-            const body = await response.json();
-
-            const table = body.map((spammer, index) => {
-                const tr = document.createElement("tr");
-
-                const indexTd = document.createElement("td");
-                indexTd.innerText = index + 1;
-                tr.appendChild(indexTd);
-
-                const domainTd = document.createElement("td");
-                const domainRef = document.createElement("a");
-                domainRef.setAttribute("href", `/spammers/${encodeURI(spammer['domain'])}`);
-                domainRef.innerText = spammer['domain']
-                domainTd.appendChild(domainRef);
-                tr.appendChild(domainTd);
-
-                const reportCountTd = document.createElement("td");
-                reportCountTd.innerText = spammer['count'];
-                tr.appendChild(reportCountTd);
-
-                const spamRatio = spammer['count'] / totalReportCount * 100;
-
-                const spamRatioProgressTd = document.createElement("td");
-                spamRatioProgressTd.append(createProgressDiv(spamRatio));
-                tr.appendChild(spamRatioProgressTd);
-
-                const spamRatioTd = document.createElement("td");
-                spamRatioTd.innerText = `${spamRatio.toFixed(1)}%`;
-                tr.appendChild(spamRatioTd);
-
-                return tr;
-            });
-            const tableBody = document.getElementById("top-spammers-table-body")
+            const tableBody = document.getElementById("domains-table-body");
             tableBody.innerHTML = "";
-            table.forEach((row) => {
-                tableBody.appendChild(row);
-            });
 
+            body['domains'].forEach((domain) => {
+                const tr = document.createElement("tr");
+                const td = document.createElement("td");
+                td.innerText = domain;
+                tr.appendChild(td);
+                tableBody.appendChild(tr);
+            });
         }
     }
 
@@ -270,7 +184,7 @@
     const historicalChart = createHistoricalChart();
 
     async function updateHistoricalChart() {
-        const response = await fetch("/api/stats/reports/historical");
+        const response = await fetch(`/api/stats/reports/historical?spammer=${spammer}`);
         if (response.ok) {
             const body = await response.json();
 
@@ -285,7 +199,6 @@
 
     function update() {
         updateStats()
-            .then(updateSpammers)
             .then(updateHistoricalChart)
             .then(() => {
                 setTimeout(update, 10 * 60 * 1000);

@@ -20,7 +20,6 @@ while continue
       domain = PublicSuffix.domain(email_address.split('@', 2)[1])
 
       flagged = mail['flag']['flagStatus'] == 'flagged'
-      blacklisted = nil
       blacklisted = OSA::Blacklist.where(value: email_address).or(OSA::Blacklist.where(value: domain)).exists?
 
       if flagged
