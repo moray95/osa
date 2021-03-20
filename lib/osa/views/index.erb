@@ -78,6 +78,15 @@
       </div>
 
       <div class="row">
+        <div id="interval-btn-group"  class="btn-group">
+          <button onclick="updateInterval(this, '')" type="button" class="btn btn-info active">All time</button>
+          <button onclick="updateInterval(this, '1')" type="button" class="btn btn-info">1 day</button>
+          <button onclick="updateInterval(this, '7')" type="button" class="btn btn-info">7 days</button>
+          <button onclick="updateInterval(this, '30')" type="button" class="btn btn-info">30 days</button>
+        </div>
+      </div>
+
+      <div class="row">
         <div class="card">
           <div class="card-header">
             <h3 class="card-title">Spams reported</h3>
@@ -136,6 +145,21 @@
 
 <script>
     let totalReportCount = 0;
+    let interval = "";
+
+    function updateInterval(element, newInterval) {
+        interval = newInterval;
+        let children = Array.from(document.getElementById("interval-btn-group").children);
+        console.log(children);
+        children.forEach((child) => {
+            if (child === element) {
+                child.classList.add("active");
+            } else {
+                child.classList.remove("active");
+            }
+        });
+        update();
+    }
 
     function sec2time(timeInSeconds) {
         const time = parseFloat(timeInSeconds).toFixed(3);
@@ -179,7 +203,7 @@
     }
 
     async function updateSpammers() {
-        const response = await fetch('/api/stats/spammers');
+        const response = await fetch(`/api/stats/spammers?interval=${interval}`);
         if (response.ok) {
             const body = await response.json();
 
@@ -270,7 +294,7 @@
     const historicalChart = createHistoricalChart();
 
     async function updateHistoricalChart() {
-        const response = await fetch("/api/stats/reports/historical");
+        const response = await fetch(`/api/stats/reports/historical?interval=${interval}`);
         if (response.ok) {
             const body = await response.json();
 
@@ -285,11 +309,11 @@
 
     function update() {
         updateStats()
-            .then(updateSpammers)
-            .then(updateHistoricalChart)
-            .then(() => {
-                setTimeout(update, 10 * 60 * 1000);
-            })
+          .then(updateSpammers)
+          .then(updateHistoricalChart)
+          .then(() => {
+              setTimeout(update, 10 * 60 * 1000);
+          })
     }
 
     update();

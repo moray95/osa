@@ -25,7 +25,7 @@ module OSA
 
   class DnsBlacklist < ActiveRecord::Base
     def blacklisted?(ip)
-      ::Resolv.getaddress("#{ip}.#{server}") != "0.0.0.0"
+      ::Resolv.getaddress("#{ip}.#{server}") != '0.0.0.0'
     rescue ::Resolv::ResolvError
       return false
     end

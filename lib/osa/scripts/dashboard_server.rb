@@ -54,7 +54,11 @@ class DashboardServer < Sinatra::Base
   end
 
   get '/api/stats/spammers' do
-    spammers = OSA::Report.select('sender_domain as domain', 'COUNT(*) as count').limit(50).order(count: :desc).group(:sender_domain)
+    spammers = OSA::Report.select('sender_domain as domain', 'COUNT(*) as count')
+    unless params[:interval].blank?
+      spammers = spammers.where('received_at > ?', Time.now - params[:interval].to_i.days)
+    end
+    spammers = spammers.limit(50).order(count: :desc).group(:sender_domain)
     json spammers
   end
 
@@ -62,6 +66,9 @@ class DashboardServer < Sinatra::Base
     historical_data = OSA::Report.select("strftime('%Y-%m-%d', reported_at) as date", 'count(*) as count')
     unless params[:spammer].blank?
       historical_data = historical_data.where(sender: params[:spammer]).or(OSA::Report.where(sender_domain: params[:spammer]))
+    end
+    unless params[:interval].blank?
+      historical_data = historical_data.where('received_at > ?', Time.now - params[:interval].to_i.days)
     end
     json historical_data.group(:date)
   end
