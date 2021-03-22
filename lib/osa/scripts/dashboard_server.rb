@@ -6,6 +6,7 @@ require 'osa/util/db'
 class DashboardServer < Sinatra::Base
   set :views, File.absolute_path(File.dirname(__FILE__) + '/../views')
   set :port, ENV['SERVER_PORT'] || 8080
+  after { ActiveRecord::Base.connection.close }
 
   get '/' do
     erb :index
