@@ -21,13 +21,26 @@ def resolve_blacklist(mail_id, email_address, domain, context, dns_blacklists)
   dns_blacklists.find { |bl| bl.blacklisted?(ip) }&.server
 end
 
+def extract_email_address(mail)
+  email_address = mail['sender']['emailAddress']['address']
+  return email_address unless email_address.nil?
+
+  # Sometimes the SMTP From header is misformatted and the email address is
+  # parsed as part of the name by Outlook. Try to extract the email address
+  # from the name.
+  sender_name = mail['sender']['emailAddress']['name']
+  return nil if sender_name.nil?
+
+  sender_name.scan(/<(.+@.+)>/).first&.first
+end
+
 while continue
   mails = context.graph_client.mails(context.config.junk_folder_id)
   continue = false
   loop do
     break if mails.nil?
     mails['value'].each do |mail|
-      email_address = mail['sender']['emailAddress']['address']
+      email_address = extract_email_address(mail)
       next if email_address.nil?
       domain = PublicSuffix.domain(email_address.split('@', 2)[1])
 
