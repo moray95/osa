@@ -25,13 +25,20 @@ def extract_email_address(mail)
   email_address = mail['sender']['emailAddress']['address']
   return email_address unless email_address.nil?
 
-  # Sometimes the SMTP From header is misformatted and the email address is
+  # The SMTP From header might be misformatted and the email address is
   # parsed as part of the name by Outlook. Try to extract the email address
   # from the name.
   sender_name = mail['sender']['emailAddress']['name']
   return nil if sender_name.nil?
 
   sender_name.scan(/<(.+@.+)>/).first&.first
+end
+
+def report(mail, context, email_address)
+  puts "forwarding spam from #{email_address}"
+  context.graph_client.forward_mail_as_attachment(mail['id'], context.config.spamcop_report_email)
+  puts "deleting spam from #{email_address}"
+  context.graph_client.delete_mail(mail['id'])
 end
 
 while continue
@@ -41,10 +48,21 @@ while continue
     break if mails.nil?
     mails['value'].each do |mail|
       email_address = extract_email_address(mail)
+      flagged = mail['flag']['flagStatus'] == 'flagged'
+
+      # Emails without a proper email address are not properly
+      # handled down below. Just report the mail and skip other
+      # procedures.
+      if flagged && email_address.nil?
+        report(mail, context, email_address)
+        continue = true
+        next
+      end
+
       next if email_address.nil?
+
       domain = PublicSuffix.domain(email_address.split('@', 2)[1])
 
-      flagged = mail['flag']['flagStatus'] == 'flagged'
       blacklist = (resolve_blacklist(mail['id'], email_address, domain, context, dns_blacklists) unless flagged)
 
       if flagged
@@ -56,12 +74,8 @@ while continue
         next
       end
 
+      report(mail, context, email_address)
       continue = true
-
-      puts "forwarding spam from #{email_address}"
-      context.graph_client.forward_mail_as_attachment(mail['id'], context.config.spamcop_report_email)
-      puts "deleting spam from #{email_address}"
-      context.graph_client.delete_mail(mail['id'])
 
       OSA::Report.create!(sender: email_address,
                           sender_domain: domain,
@@ -71,7 +85,7 @@ while continue
                           received_at: Time.iso8601(mail['receivedDateTime']),
                           reported_at: Time.now)
 
-      # Do not add to the blacklist if the it's blacklisted by the db (it's already present)
+      # Do not add to the blacklist if it's blacklisted by the db (it's already present)
       # or blacklisted by DNSBLs (these blacklists are only supposed to be temporary).
       if flagged
         is_free_provider = OSA::EmailProvider.where(value: domain).exists?

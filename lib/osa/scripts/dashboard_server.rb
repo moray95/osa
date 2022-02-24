@@ -45,7 +45,8 @@ class DashboardServer < Sinatra::Base
     week_reported = reports.where('reported_at > ?', week).count
     month = DateTime.now - 30.days
     month_reported = reports.where('reported_at > ?', month).count
-    domains = reports.select(:sender).distinct.map { |e| e.sender.split('@', 2)[1] }.uniq
+    domains = reports.select(:sender).distinct.map { |e| e.sender.split('@', 2)[1] }
+    domains.uniq!
 
     json total_reported: total_reported,
          today_reported: today_reported,
